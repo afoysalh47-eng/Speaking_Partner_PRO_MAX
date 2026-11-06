@@ -1,0 +1,6 @@
+{
+  "name": "Speaking Partner",
+  "description": "AI Speaking Partner PRO MAX: Face-to-Face 3D Video Call English Coach with Bangla-to-English speech, 3-Tone Rewriter, Phoneme Lab, IELTS Mock Examiner, and Voice/Photo Cloning.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

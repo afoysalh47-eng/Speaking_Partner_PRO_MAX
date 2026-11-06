@@ -1,0 +1,138 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Stores user onboarding goals, proficiency level, help language, daily speaking stats, and admin/OTA settings.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID" },
+        "displayName": { "type": "string", "description": "User display name" },
+        "englishLevel": { "type": "string", "description": "Beginner, Intermediate, or Advanced" },
+        "helpLanguage": { "type": "string", "description": "Bangla, English, or Hindi" },
+        "selectedGoals": { "type": "array", "description": "Selected onboarding goal IDs (max 10)" },
+        "streakDays": { "type": "integer", "description": "Consecutive practice days" },
+        "minutesToday": { "type": "integer", "description": "Speaking minutes logged today" },
+        "fluencyScore": { "type": "integer", "description": "Estimated fluency score (0-100)" },
+        "dailyChallengeMinutes": { "type": "integer", "description": "Progress toward 5-minute daily challenge" },
+        "onboardingCompleted": { "type": "boolean", "description": "Whether onboarding steps 1 and 2 are complete" },
+        "latestVersionCode": { "type": "integer", "description": "OTA version code configured in Admin panel" },
+        "homeBannerText": { "type": "string", "description": "Live OTA banner message on Home and Scenarios Hub" },
+        "backupGeminiKey1": { "type": "string", "description": "Optional failover Gemini API key #1" },
+        "backupGeminiKey2": { "type": "string", "description": "Optional failover Gemini API key #2" },
+        "fishAudioKey1": { "type": "string", "description": "Optional Fish Audio voice cloning key #1" },
+        "fishAudioKey2": { "type": "string", "description": "Optional Fish Audio voice cloning key #2" },
+        "elevenLabsKey": { "type": "string", "description": "Optional ElevenLabs voice cloning key" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp on creation" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp on update" }
+      },
+      "required": [
+        "userId",
+        "displayName",
+        "englishLevel",
+        "helpLanguage",
+        "streakDays",
+        "minutesToday",
+        "fluencyScore",
+        "dailyChallengeMinutes",
+        "onboardingCompleted",
+        "createdAt"
+      ]
+    },
+    "VocabEntry": {
+      "title": "VocabEntry",
+      "description": "3-Tone Vocabulary Bank item with Casual, Business Formal, and Native Idiomatic rewrites plus Bangla meaning.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID" },
+        "originalSentence": { "type": "string", "description": "Original user sentence" },
+        "casualTone": { "type": "string", "description": "Casual conversational rewrite" },
+        "formalTone": { "type": "string", "description": "Business formal rewrite" },
+        "idiomaticTone": { "type": "string", "description": "Native idiomatic rewrite" },
+        "banglaMeaning": { "type": "string", "description": "Bangla explanation and translation" },
+        "vocabHighlight": { "type": "string", "description": "Key phrase or vocabulary word" },
+        "masteryLevel": { "type": "integer", "description": "Quiz recall mastery score (0-5)" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp on creation" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp on update" }
+      },
+      "required": [
+        "userId",
+        "originalSentence",
+        "casualTone",
+        "formalTone",
+        "idiomaticTone",
+        "banglaMeaning",
+        "vocabHighlight",
+        "masteryLevel",
+        "createdAt"
+      ]
+    },
+    "FamiliarPerson": {
+      "title": "FamiliarPerson",
+      "description": "Custom uploaded familiar person profile with lip-sync calibration and voice cloning settings.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID" },
+        "name": { "type": "string", "description": "Person name (e.g., Friend, Boss, Teacher)" },
+        "relationship": { "type": "string", "description": "Role or relationship label" },
+        "accent": { "type": "string", "description": "Voice accent (US, UK, AU, BD-EN)" },
+        "mouthYRatio": { "type": "integer", "description": "Vertical mouth position percentage (0-100)" },
+        "mouthWidthRatio": { "type": "integer", "description": "Mouth width percentage (10-80)" },
+        "voiceEngine": { "type": "string", "description": "Selected voice clone engine (HuggingFace, FishAudio, ElevenLabs, DeviceTTS)" },
+        "photoUri": { "type": "string", "description": "Local or content URI of selected portrait" },
+        "voiceSampleNote": { "type": "string", "description": "Voice sample status or reference note" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp on creation" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp on update" }
+      },
+      "required": [
+        "userId",
+        "name",
+        "relationship",
+        "accent",
+        "mouthYRatio",
+        "mouthWidthRatio",
+        "voiceEngine",
+        "createdAt"
+      ]
+    },
+    "CustomTopic": {
+      "title": "CustomTopic",
+      "description": "Live custom practice scenario added via In-App Cloud Admin panel.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string", "description": "Owner Firebase Auth UID" },
+        "title": { "type": "string", "description": "Scenario title" },
+        "badgeLevel": { "type": "string", "description": "Easy or Intermediate" },
+        "category": { "type": "string", "description": "Goal category" },
+        "roleplayPrompt": { "type": "string", "description": "Instructions for AI tutor roleplay" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Server timestamp on creation" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Server timestamp on update" }
+      },
+      "required": [
+        "userId",
+        "title",
+        "badgeLevel",
+        "category",
+        "roleplayPrompt",
+        "createdAt"
+      ]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Per-user profile, goals, streak stats, and OTA/API failover configuration."
+    },
+    "/users/{userId}/vocab_bank/{vocabId}": {
+      "schema": { "$ref": "#/entities/VocabEntry" },
+      "description": "Per-user 3-Tone Vocabulary Bank and flashcard quiz items."
+    },
+    "/users/{userId}/familiar_people/{personId}": {
+      "schema": { "$ref": "#/entities/FamiliarPerson" },
+      "description": "Per-user custom familiar person photo lip-sync and voice clone profiles."
+    },
+    "/users/{userId}/custom_topics/{topicId}": {
+      "schema": { "$ref": "#/entities/CustomTopic" },
+      "description": "Per-user custom practice scenarios created in the Cloud Admin panel."
+    }
+  }
+}

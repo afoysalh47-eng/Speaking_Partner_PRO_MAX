@@ -1,0 +1,228 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidOptionalString(data, key, maxLen) {
+      return !(key in data) || data[key] == null || (data[key] is string && data[key].size() <= maxLen);
+    }
+
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 80 &&
+             data.englishLevel is string && data.englishLevel.size() >= 1 && data.englishLevel.size() <= 30 &&
+             data.helpLanguage is string && data.helpLanguage.size() >= 1 && data.helpLanguage.size() <= 30 &&
+             data.streakDays is int && data.streakDays >= 0 && data.streakDays <= 10000 &&
+             data.minutesToday is int && data.minutesToday >= 0 && data.minutesToday <= 1440 &&
+             data.fluencyScore is int && data.fluencyScore >= 0 && data.fluencyScore <= 100 &&
+             data.dailyChallengeMinutes is int && data.dailyChallengeMinutes >= 0 && data.dailyChallengeMinutes <= 1440 &&
+             data.onboardingCompleted is bool &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             (!('selectedGoals' in data) || (data.selectedGoals is list && data.selectedGoals.size() <= 10 && (data.selectedGoals.size() == 0 || (data.selectedGoals[0] is string && data.selectedGoals[0].size() <= 50)))) &&
+             (!('latestVersionCode' in data) || (data.latestVersionCode is int && data.latestVersionCode >= 1 && data.latestVersionCode <= 1000)) &&
+             isValidOptionalString(data, 'homeBannerText', 200) &&
+             isValidOptionalString(data, 'backupGeminiKey1', 200) &&
+             isValidOptionalString(data, 'backupGeminiKey2', 200) &&
+             isValidOptionalString(data, 'fishAudioKey1', 200) &&
+             isValidOptionalString(data, 'fishAudioKey2', 200) &&
+             isValidOptionalString(data, 'elevenLabsKey', 200) &&
+             (!('updatedAt' in data) || data.updatedAt == null || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    function isValidVocabEntry(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.originalSentence is string && data.originalSentence.size() >= 1 && data.originalSentence.size() <= 500 &&
+             data.casualTone is string && data.casualTone.size() >= 1 && data.casualTone.size() <= 500 &&
+             data.formalTone is string && data.formalTone.size() >= 1 && data.formalTone.size() <= 500 &&
+             data.idiomaticTone is string && data.idiomaticTone.size() >= 1 && data.idiomaticTone.size() <= 500 &&
+             data.banglaMeaning is string && data.banglaMeaning.size() >= 1 && data.banglaMeaning.size() <= 500 &&
+             data.vocabHighlight is string && data.vocabHighlight.size() >= 1 && data.vocabHighlight.size() <= 200 &&
+             data.masteryLevel is int && data.masteryLevel >= 0 && data.masteryLevel <= 5 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             (!('updatedAt' in data) || data.updatedAt == null || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    function isValidFamiliarPerson(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 80 &&
+             data.relationship is string && data.relationship.size() >= 1 && data.relationship.size() <= 60 &&
+             data.accent is string && data.accent.size() >= 1 && data.accent.size() <= 30 &&
+             data.mouthYRatio is int && data.mouthYRatio >= 0 && data.mouthYRatio <= 100 &&
+             data.mouthWidthRatio is int && data.mouthWidthRatio >= 10 && data.mouthWidthRatio <= 90 &&
+             data.voiceEngine is string && data.voiceEngine.size() >= 1 && data.voiceEngine.size() <= 40 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             isValidOptionalString(data, 'photoUri', 500) &&
+             isValidOptionalString(data, 'voiceSampleNote', 200) &&
+             (!('updatedAt' in data) || data.updatedAt == null || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    function isValidCustomTopic(data) {
+      return data.userId is string && data.userId == request.auth.uid &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             data.badgeLevel is string && data.badgeLevel.size() >= 1 && data.badgeLevel.size() <= 30 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 60 &&
+             data.roleplayPrompt is string && data.roleplayPrompt.size() >= 1 && data.roleplayPrompt.size() <= 600 &&
+             data.createdAt is timestamp && data.createdAt <= request.time &&
+             (!('updatedAt' in data) || data.updatedAt == null || (data.updatedAt is timestamp && data.updatedAt <= request.time));
+    }
+
+    match /users/{userId} {
+      allow get: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+      allow list: if isSignedIn() && request.auth.uid == userId && existing().userId == request.auth.uid;
+
+      allow create: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       incoming().keys().hasAll([
+                         'userId', 'displayName', 'englishLevel', 'helpLanguage',
+                         'streakDays', 'minutesToday', 'fluencyScore',
+                         'dailyChallengeMinutes', 'onboardingCompleted', 'createdAt'
+                       ]) &&
+                       incoming().keys().hasOnly([
+                         'userId', 'displayName', 'englishLevel', 'helpLanguage',
+                         'selectedGoals', 'streakDays', 'minutesToday', 'fluencyScore',
+                         'dailyChallengeMinutes', 'onboardingCompleted', 'latestVersionCode',
+                         'homeBannerText', 'backupGeminiKey1', 'backupGeminiKey2',
+                         'fishAudioKey1', 'fishAudioKey2', 'elevenLabsKey',
+                         'createdAt', 'updatedAt'
+                       ]) &&
+                       isValidUserProfile(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly([
+                         'displayName', 'englishLevel', 'helpLanguage', 'selectedGoals',
+                         'streakDays', 'minutesToday', 'fluencyScore',
+                         'dailyChallengeMinutes', 'onboardingCompleted', 'latestVersionCode',
+                         'homeBannerText', 'backupGeminiKey1', 'backupGeminiKey2',
+                         'fishAudioKey1', 'fishAudioKey2', 'elevenLabsKey', 'updatedAt'
+                       ]);
+
+      allow delete: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+
+      match /vocab_bank/{vocabId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(vocabId) && request.auth.uid == userId && existing().userId == request.auth.uid;
+        allow list: if isSignedIn() && request.auth.uid == userId && existing().userId == request.auth.uid;
+
+        allow create: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(vocabId) &&
+                         request.auth.uid == userId &&
+                         incoming().keys().hasAll([
+                           'userId', 'originalSentence', 'casualTone', 'formalTone',
+                           'idiomaticTone', 'banglaMeaning', 'vocabHighlight',
+                           'masteryLevel', 'createdAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'originalSentence', 'casualTone', 'formalTone',
+                           'idiomaticTone', 'banglaMeaning', 'vocabHighlight',
+                           'masteryLevel', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidVocabEntry(incoming());
+
+        allow update: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(vocabId) &&
+                         request.auth.uid == userId &&
+                         isValidVocabEntry(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'masteryLevel', 'updatedAt'
+                         ]);
+
+        allow delete: if isSignedIn() && isValidId(userId) && isValidId(vocabId) && request.auth.uid == userId && existing().userId == request.auth.uid;
+      }
+
+      match /familiar_people/{personId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(personId) && request.auth.uid == userId && existing().userId == request.auth.uid;
+        allow list: if isSignedIn() && request.auth.uid == userId && existing().userId == request.auth.uid;
+
+        allow create: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(personId) &&
+                         request.auth.uid == userId &&
+                         incoming().keys().hasAll([
+                           'userId', 'name', 'relationship', 'accent',
+                           'mouthYRatio', 'mouthWidthRatio', 'voiceEngine', 'createdAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'name', 'relationship', 'accent',
+                           'mouthYRatio', 'mouthWidthRatio', 'voiceEngine',
+                           'photoUri', 'voiceSampleNote', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidFamiliarPerson(incoming());
+
+        allow update: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(personId) &&
+                         request.auth.uid == userId &&
+                         isValidFamiliarPerson(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'name', 'relationship', 'accent', 'mouthYRatio',
+                           'mouthWidthRatio', 'voiceEngine', 'photoUri',
+                           'voiceSampleNote', 'updatedAt'
+                         ]);
+
+        allow delete: if isSignedIn() && isValidId(userId) && isValidId(personId) && request.auth.uid == userId && existing().userId == request.auth.uid;
+      }
+
+      match /custom_topics/{topicId} {
+        allow get: if isSignedIn() && isValidId(userId) && isValidId(topicId) && request.auth.uid == userId && existing().userId == request.auth.uid;
+        allow list: if isSignedIn() && request.auth.uid == userId && existing().userId == request.auth.uid;
+
+        allow create: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(topicId) &&
+                         request.auth.uid == userId &&
+                         incoming().keys().hasAll([
+                           'userId', 'title', 'badgeLevel', 'category',
+                           'roleplayPrompt', 'createdAt'
+                         ]) &&
+                         incoming().keys().hasOnly([
+                           'userId', 'title', 'badgeLevel', 'category',
+                           'roleplayPrompt', 'createdAt', 'updatedAt'
+                         ]) &&
+                         isValidCustomTopic(incoming());
+
+        allow update: if isSignedIn() &&
+                         isValidId(userId) &&
+                         isValidId(topicId) &&
+                         request.auth.uid == userId &&
+                         isValidCustomTopic(incoming()) &&
+                         incoming().userId == existing().userId &&
+                         incoming().createdAt == existing().createdAt &&
+                         incoming().diff(existing()).affectedKeys().hasOnly([
+                           'title', 'badgeLevel', 'category', 'roleplayPrompt', 'updatedAt'
+                         ]);
+
+        allow delete: if isSignedIn() && isValidId(userId) && isValidId(topicId) && request.auth.uid == userId && existing().userId == request.auth.uid;
+      }
+    }
+  }
+}
